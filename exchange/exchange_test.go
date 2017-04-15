@@ -58,3 +58,66 @@ func TestBuildURLWithMoreThanOneIndex(t *testing.T) {
 		t.Fatalf("Expected URL to be %s, is %s", expected, actual)
 	}
 }
+
+func TestParseForOneIndex(t *testing.T) {
+	jsonResult := "{\"query\":{\"results\":{\"quote\":{\"Name\":\"Nikkei 225\",\"Symbol\":\"^n225\",\"ChangeInPercent\":\"-0.91%\",\"Change\":\"-172.98\",\"LastTradeDate\":\"4/14/2017\",\"LastTradeTime\":\"3:15pm\"}}}}"
+
+	exchangeResult := ExchangesResult{rawResult: jsonResult}
+
+	exchangeResult.Parse()
+
+	for key, exchange := range exchangeResult.Exchanges {
+		if key != "Nikkei 225" {
+			t.Fatalf("Exchanges list should have key %s, but it is %s", "Nikkei 225", key)
+		}
+
+		if exchange.Name != "Nikkei 225" {
+			t.Fatalf("Exchange name should be %s, is %s", "Nikkei 225", exchange.Name)
+		}
+
+		if exchange.Symbol != "^n225" {
+			t.Fatalf("Exchange symbol should be %s, is %s", "^n225", exchange.Symbol)
+		}
+
+		if exchange.PercentChange != "-0.91%" {
+			t.Fatalf("Parsed percent change should be %s, is %s", "-0.91%", exchange.PercentChange)
+		}
+
+		if exchange.ChangeInPoints != "-172.98" {
+			t.Fatalf("Parsed change in points should be %s, is %s", "-172.98", exchange.ChangeInPoints)
+		}
+
+		if exchange.LastTradeDate != "4/14/2017" {
+			t.Fatalf("Parsed 'last trade date' should be %s, is %s", "4/14/2017", exchange.LastTradeDate)
+		}
+
+		if exchange.LastTradeTime != "3:15pm" {
+			t.Fatalf("Parsed 'last trade time' should be %s, is %s", "3:15pm", exchange.LastTradeTime)
+		}
+	}
+}
+
+func TestParseForMoreThanOneIndex(t *testing.T) {
+	exchangeResult := ExchangesResult{
+		rawResult: "{\"query\":{\"results\":{\"quote\":[{\"Name\":\"Nikkei 225\",\"Symbol\":\"^n225\",\"ChangeInPercent\":\"-0.91%\",\"Change\":\"-172.98\",\"LastTradeDate\":\"4/14/2017\",\"LastTradeTime\":\"3:15pm\"},{\"Name\":\"Alphabet Inc.\",\"Symbol\":\"GOOGL\",\"ChangeInPercent\":\"-0.09%\",\"Change\":\"-0.76\",\"LastTradeDate\":\"4/13/2017\",\"LastTradeTime\":\"4:00pm\"}]}}}",
+	}
+
+	exchangeResult.Parse()
+
+	expectedList := map[string]Exchange{
+		"Nikkei 225":    Exchange{Name: "Nikkei 225", Symbol: "^n225", PercentChange: "-0.91%", ChangeInPoints: "-172.98", LastTradeDate: "4/14/2017", LastTradeTime: "3:15pm"},
+		"Alphabet Inc.": Exchange{Name: "Alphabet Inc.", Symbol: "GOOGL", PercentChange: "-0.09%", ChangeInPoints: "-0.76", LastTradeDate: "4/13/2017", LastTradeTime: "4:00pm"},
+	}
+
+	nikkei := exchangeResult.Exchanges["Nikkei 225"]
+
+	if nikkei != expectedList["Nikkei 225"] {
+		t.Fatalf("Parsed exchanges list should have a %s exchange and it should be equal to %v, but it is %v", "Nikkei 225", expectedList["Nikkei 225"], nikkei)
+	}
+
+	google := exchangeResult.Exchanges["Alphabet Inc."]
+
+	if google != expectedList["Alphabet Inc."] {
+		t.Fatalf("Parsed exchanges list should have a %s exchange and it should be equal to %v, but it is %v", "Alphabet Inc.", expectedList["Alphabet Inc."], google)
+	}
+}
