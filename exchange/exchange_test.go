@@ -39,7 +39,7 @@ func TestFetchWithRequestError(t *testing.T) {
 
 func TestBuildURLWithOneIndex(t *testing.T) {
 	index := []string{"^BVSP"}
-	expected := "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(%22^BVSP%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback="
+	expected := "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(%22^BVSP%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys"
 
 	actual := BuildURL(index)
 
@@ -50,7 +50,7 @@ func TestBuildURLWithOneIndex(t *testing.T) {
 
 func TestBuildURLWithMoreThanOneIndex(t *testing.T) {
 	indexes := []string{"^BVSP", "GOOGL"}
-	expected := "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(%22^BVSP,GOOGL%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback="
+	expected := "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.quotes%20where%20symbol%20in%20(%22^BVSP,GOOGL%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys"
 
 	actual := BuildURL(indexes)
 
