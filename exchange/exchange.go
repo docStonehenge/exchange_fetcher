@@ -74,7 +74,7 @@ func (ex *ExchangesResult) setExchangeByNameKey(parsedExchange map[string]interf
 	ex.Exchanges[parsedExchange["Name"].(string)] = Exchange{
 		Name:           parsedExchange["Name"].(string),
 		Symbol:         parsedExchange["Symbol"].(string),
-		PercentChange:  parsedExchange["ChangeInPercent"].(string),
+		PercentChange:  parsedExchange["PercentChange"].(string),
 		ChangeInPoints: parsedExchange["Change"].(string),
 		LastTradeDate:  parsedExchange["LastTradeDate"].(string),
 		LastTradeTime:  parsedExchange["LastTradeTime"].(string),

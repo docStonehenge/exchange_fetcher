@@ -60,7 +60,7 @@ func TestBuildURLWithMoreThanOneIndex(t *testing.T) {
 }
 
 func TestParseForOneIndex(t *testing.T) {
-	jsonResult := "{\"query\":{\"results\":{\"quote\":{\"Name\":\"Nikkei 225\",\"Symbol\":\"^n225\",\"ChangeInPercent\":\"-0.91%\",\"Change\":\"-172.98\",\"LastTradeDate\":\"4/14/2017\",\"LastTradeTime\":\"3:15pm\"}}}}"
+	jsonResult := "{\"query\":{\"results\":{\"quote\":{\"Name\":\"Nikkei 225\",\"Symbol\":\"^n225\",\"PercentChange\":\"-0.91%\",\"Change\":\"-172.98\",\"LastTradeDate\":\"4/14/2017\",\"LastTradeTime\":\"3:15pm\"}}}}"
 
 	exchangeResult := ExchangesResult{rawResult: jsonResult}
 
@@ -99,7 +99,7 @@ func TestParseForOneIndex(t *testing.T) {
 
 func TestParseForMoreThanOneIndex(t *testing.T) {
 	exchangeResult := ExchangesResult{
-		rawResult: "{\"query\":{\"results\":{\"quote\":[{\"Name\":\"Nikkei 225\",\"Symbol\":\"^n225\",\"ChangeInPercent\":\"-0.91%\",\"Change\":\"-172.98\",\"LastTradeDate\":\"4/14/2017\",\"LastTradeTime\":\"3:15pm\"},{\"Name\":\"Alphabet Inc.\",\"Symbol\":\"GOOGL\",\"ChangeInPercent\":\"-0.09%\",\"Change\":\"-0.76\",\"LastTradeDate\":\"4/13/2017\",\"LastTradeTime\":\"4:00pm\"}]}}}",
+		rawResult: "{\"query\":{\"results\":{\"quote\":[{\"Name\":\"Nikkei 225\",\"Symbol\":\"^n225\",\"PercentChange\":\"-0.91%\",\"Change\":\"-172.98\",\"LastTradeDate\":\"4/14/2017\",\"LastTradeTime\":\"3:15pm\"},{\"Name\":\"Alphabet Inc.\",\"Symbol\":\"GOOGL\",\"PercentChange\":\"-0.09%\",\"Change\":\"-0.76\",\"LastTradeDate\":\"4/13/2017\",\"LastTradeTime\":\"4:00pm\"}]}}}",
 	}
 
 	exchangeResult.Parse()
