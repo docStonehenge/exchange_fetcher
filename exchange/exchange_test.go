@@ -121,3 +121,57 @@ func TestParseForMoreThanOneIndex(t *testing.T) {
 		t.Fatalf("Parsed exchanges list should have a %s exchange and it should be equal to %v, but it is %v", "Alphabet Inc.", expectedList["Alphabet Inc."], google)
 	}
 }
+
+func TestParseForMalformedJSONQuery(t *testing.T) {
+	exchangeResult := ExchangesResult{rawResult: "{\"foo\":{}}"}
+
+	err := exchangeResult.Parse()
+
+	if err == nil {
+		t.Fatal("Parse() with malformed JSON response should return error, but returned nothing.")
+	}
+}
+
+func TestParseForMalformedJSONResults(t *testing.T) {
+	exchangeResult := ExchangesResult{rawResult: "{\"query\":{\"results\":null}}"}
+
+	err := exchangeResult.Parse()
+
+	if err == nil {
+		t.Fatal("Parse() with malformed JSON response should return error, but returned nothing.")
+	}
+}
+
+func TestParseForMalformedJSONQuoteKeyWithOneIndex(t *testing.T) {
+	exchangeResult := ExchangesResult{
+		rawResult: "{\"query\":{\"results\":{\"quote\":{\"Name\":null,\"Symbol\":\"foo\",\"PercentChange\":null,\"Change\":null,\"LastTradeDate\":null,\"LastTradeTime\":null}}}}",
+	}
+
+	err := exchangeResult.Parse()
+
+	if err == nil {
+		t.Fatal("Parse() with malformed JSON response should return error, but returned nothing.")
+	}
+}
+
+func TestParseForMalformedJSONQuoteKeyWithMoreThanOneIndex(t *testing.T) {
+	exchangeResult := ExchangesResult{
+		rawResult: "{\"query\":{\"results\":{\"quote\":[{\"Name\":null,\"Symbol\":\"foo\",\"PercentChange\":null,\"Change\":null,\"LastTradeDate\":null,\"LastTradeTime\":null},{\"Name\":null,\"Symbol\":\"boo\",\"PercentChange\":null,\"Change\":null,\"LastTradeDate\":null,\"LastTradeTime\":null}]}}}",
+	}
+
+	err := exchangeResult.Parse()
+
+	if err == nil {
+		t.Fatal("Parse() with malformed JSON response should return error, but returned nothing.")
+	}
+}
+
+func TestError(t *testing.T) {
+	err := malformedJSONError{"Message"}
+
+	msg := err.Error()
+
+	if msg != "Message" {
+		t.Fatalf("Error message should be %s, but is %s", "Message", msg)
+	}
+}

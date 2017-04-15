@@ -20,6 +20,10 @@ type Exchange struct {
 	Name, Symbol, PercentChange, ChangeInPoints, LastTradeDate, LastTradeTime string
 }
 
+type malformedJSONError struct {
+	message string
+}
+
 func Fetch(url string) (*ExchangesResult, error) {
 	response, err := http.Get(url)
 
@@ -46,37 +50,64 @@ func BuildURL(indexes []string) string {
 	return url
 }
 
-func (ex *ExchangesResult) Parse() {
+func (ex *ExchangesResult) Parse() error {
 	ex.Exchanges = make(map[string]Exchange)
-	exchanges := ex.parseRawResultToJSON()
+	exchanges, parsedSuccessfully := ex.parseRawResultToJSON()
+
+	if !parsedSuccessfully {
+		return &malformedJSONError{"There was a problem when parsing JSON response."}
+	}
 
 	if exchange, ok := exchanges["quote"].(map[string]interface{}); ok {
-		ex.setExchangeByNameKey(exchange)
+		if result := ex.setExchangeByNameKey(exchange); !result {
+			return &malformedJSONError{"There was a problem when parsing JSON response."}
+		}
 	}
 
 	if exchanges, ok := exchanges["quote"].([]interface{}); ok {
 		for _, exchange := range exchanges {
 			exchange := exchange.(map[string]interface{})
-			ex.setExchangeByNameKey(exchange)
+			if result := ex.setExchangeByNameKey(exchange); !result {
+				return &malformedJSONError{"There was a problem when parsing JSON response."}
+			}
 		}
 	}
+
+	return nil
 }
 
-func (ex *ExchangesResult) parseRawResultToJSON() map[string]interface{} {
+func (ex *ExchangesResult) parseRawResultToJSON() (map[string]interface{}, bool) {
 	var jsonMap map[string]interface{}
 	json.Unmarshal([]byte(ex.rawResult), &jsonMap)
 
-	exchanges := jsonMap["query"].(map[string]interface{})
-	return exchanges["results"].(map[string]interface{})
+	if exchanges, ok := jsonMap["query"].(map[string]interface{}); ok {
+		if exchanges, ok := exchanges["results"].(map[string]interface{}); ok {
+			return exchanges, true
+		}
+	}
+
+	return nil, false
 }
 
-func (ex *ExchangesResult) setExchangeByNameKey(parsedExchange map[string]interface{}) {
-	ex.Exchanges[parsedExchange["Name"].(string)] = Exchange{
-		Name:           parsedExchange["Name"].(string),
+func (ex *ExchangesResult) setExchangeByNameKey(parsedExchange map[string]interface{}) bool {
+	name, ok := parsedExchange["Name"].(string)
+
+	if !ok {
+		return false
+	}
+
+	ex.Exchanges[name] = Exchange{
+		Name:           name,
 		Symbol:         parsedExchange["Symbol"].(string),
 		PercentChange:  parsedExchange["PercentChange"].(string),
 		ChangeInPoints: parsedExchange["Change"].(string),
 		LastTradeDate:  parsedExchange["LastTradeDate"].(string),
 		LastTradeTime:  parsedExchange["LastTradeTime"].(string),
 	}
+
+	return true
+}
+
+func (err *malformedJSONError) Error() string {
+	return err.message
 }
