@@ -49,10 +49,8 @@ func DefineQueue(channel *amqp.Channel, queueName string) (amqp.Queue, error) {
 	return queue, err
 }
 
-func ReceiveIndices(channel *amqp.Channel, queueName string) ([]string, error) {
-	indices := []string{}
-
-	msgs, err := channel.Consume(
+func OpenSubscriber(channel *amqp.Channel, queueName string) (<-chan amqp.Delivery, error) {
+	subscriber, err := channel.Consume(
 		queueName,
 		"",
 		true,
@@ -62,21 +60,31 @@ func ReceiveIndices(channel *amqp.Channel, queueName string) ([]string, error) {
 		nil,
 	)
 
-	for message := range msgs {
+	if err == nil {
+		return subscriber, nil
+	}
+
+	return nil, err
+}
+
+func HandleReceivedIndices(subscriber <-chan amqp.Delivery, handler func([]string)) {
+	for delivery := range subscriber {
+		indices := []string{}
+
 		var jsonIndices map[string]interface{}
-		json.Unmarshal(message.Body, &jsonIndices)
+		json.Unmarshal(delivery.Body, &jsonIndices)
 
 		for _, idx := range jsonIndices["indices"].([]interface{}) {
 			if i, ok := idx.(string); ok {
 				indices = append(indices, i)
 			}
 		}
-	}
 
-	return indices, err
+		handler(indices)
+	}
 }
 
-func PublishIndices(channel *amqp.Channel, queueName string, result exchange.ExchangesResult) error {
+func PublishIndices(channel *amqp.Channel, queueName string, result *exchange.ExchangesResult) error {
 	response, err := json.Marshal(result.Exchanges)
 
 	if err != nil {

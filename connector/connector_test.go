@@ -191,12 +191,13 @@ func TestDefineQueue(t *testing.T) {
 //   * uncomment the imports
 //   * open RabbitMQ dashboard at http://localhost:15672 and force-close connection after test run, to exit it.
 
-func TestReceiveIndices(t *testing.T) {
+func TestOpenSubscriber(t *testing.T) {
 	os.Setenv("AMQP_USERNAME", "guest")
 	os.Setenv("AMQP_PASSWORD", "guest")
 	os.Setenv("AMQP_DEFAULT_PORT", "5672")
 
 	connection, err := OpenConnection()
+	defer connection.Close()
 
 	if err != nil {
 		t.Fatal(
@@ -205,6 +206,7 @@ func TestReceiveIndices(t *testing.T) {
 	}
 
 	channel, err := OpenChannel(connection)
+	defer channel.Close()
 
 	if err != nil {
 		t.Fatalf("There was a problem on opening channel: %v", err)
@@ -217,7 +219,6 @@ func TestReceiveIndices(t *testing.T) {
 	}
 
 	testBody := "{\"indices\": [\"^BVSP\", \"AAPL\"]}"
-	expected := []string{"^BVSP", "AAPL"}
 	channel.Publish(
 		"",
 		queue.Name,
@@ -229,10 +230,76 @@ func TestReceiveIndices(t *testing.T) {
 		},
 	)
 
-	indices, err := ReceiveIndices(channel, queue.Name)
+	_, err = OpenSubscriber(channel, queue.Name)
 
-	if strings.Join(indices, ",") != strings.Join(expected, ",") {
-		t.Fatalf("Indices received should be %v, but the program received: %v", expected, indices)
+	if err != nil {
+		t.Fatalf("OpenSubscriber() should return a channel for messages, but returned error: %v", err)
+	}
+
+	os.Setenv("AMQP_USERNAME", "")
+	os.Setenv("AMQP_PASSWORD", "")
+	os.Setenv("AMQP_DEFAULT_PORT", "")
+}
+
+func TestHandleReceivedIndices(t *testing.T) {
+	os.Setenv("AMQP_USERNAME", "guest")
+	os.Setenv("AMQP_PASSWORD", "guest")
+	os.Setenv("AMQP_DEFAULT_PORT", "5672")
+
+	connection, err := OpenConnection()
+	defer connection.Close()
+
+	if err != nil {
+		t.Fatal(
+			"There was a problem on opening connection for testing. Maybe RabbitMQ server is down ?! This is an integration test, so it's necessary to have an opened connection to AMQP server.",
+		)
+	}
+
+	channel, err := OpenChannel(connection)
+	defer channel.Close()
+
+	if err != nil {
+		t.Fatalf("There was a problem on opening channel: %v", err)
+	}
+
+	queue, err := DefineQueue(channel, "test_queue")
+
+	if err != nil {
+		t.Fatalf("There was a problem on defining queue: %v", err)
+	}
+
+	testBody := "{\"indices\": [\"^BVSP\", \"AAPL\"]}"
+	channel.Publish(
+		"",
+		queue.Name,
+		false,
+		false,
+		amqp.Publishing{
+			ContentType: "application/json",
+			Body:        []byte(testBody),
+		},
+	)
+
+	subscriber, err := channel.Consume(
+		queue.Name, "", true, false, false, false, nil,
+	)
+
+	if err != nil {
+		t.Fatal()
+	}
+
+	newArray := []string{}
+
+	HandleReceivedIndices(
+		subscriber, func(arr []string) {
+			for _, item := range arr {
+				newArray = append(newArray, item)
+			}
+		},
+	)
+
+	if strings.Join(newArray, ",") != "^BVSP,AAPL" {
+		t.Fatal("Should handle subscriber received indices with handler, but nothing happened.")
 	}
 
 	os.Setenv("AMQP_USERNAME", "")
@@ -267,7 +334,7 @@ func TestPublishIndices(t *testing.T) {
 		t.Fatalf("There was a problem on defining queue: %v", err)
 	}
 
-	result := exchange.ExchangesResult{
+	result := &exchange.ExchangesResult{
 		Exchanges: map[string]exchange.Exchange{
 			"Nikkei 225":    exchange.Exchange{Name: "Nikkei 225", Symbol: "^n225", PercentChange: "-0.91%", ChangeInPoints: "-172.98", LastTradeDate: "4/14/2017", LastTradeTime: "3:15pm"},
 			"Alphabet Inc.": exchange.Exchange{Name: "Alphabet Inc.", Symbol: "GOOGL", PercentChange: "-0.09%", ChangeInPoints: "-0.76", LastTradeDate: "4/13/2017", LastTradeTime: "4:00pm"},
