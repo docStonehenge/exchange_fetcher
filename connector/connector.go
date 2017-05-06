@@ -67,7 +67,7 @@ func OpenSubscriber(channel *amqp.Channel, queueName string) (<-chan amqp.Delive
 	return nil, err
 }
 
-func HandleReceivedIndices(subscriber <-chan amqp.Delivery, handler func([]string)) {
+func HandleReceivedIndices(subscriber <-chan amqp.Delivery, indicesChannel chan []string) {
 	for delivery := range subscriber {
 		indices := []string{}
 
@@ -80,7 +80,7 @@ func HandleReceivedIndices(subscriber <-chan amqp.Delivery, handler func([]strin
 			}
 		}
 
-		handler(indices)
+		indicesChannel <- indices
 	}
 }
 

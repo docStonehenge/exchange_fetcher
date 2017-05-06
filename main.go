@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	loadEnvironmentOrCrash()
+	loadEnvironment()
 
 	fmt.Println("Connecting to AMQP server...")
 	connection, err := connector.OpenConnection()
@@ -23,12 +23,12 @@ func main() {
 	logFailureAndCrash(err)
 	fmt.Println("Channel is now opened...")
 
-	subQueueName := "exchange_fetcher.indices.subscription"
+	subQueueName := "exchange_fetcher.indices.requests"
 	queueForSubscription, err := connector.DefineQueue(channel, subQueueName)
 	logFailureAndCrash(err)
 	fmt.Printf("Receiving indices on queue '%s'\n", queueForSubscription.Name)
 
-	pubQueueName := "exchange_fetcher.indices.publishing"
+	pubQueueName := "exchange_fetcher.indices.results"
 	queueForPublishing, err := connector.DefineQueue(channel, pubQueueName)
 	logFailureAndCrash(err)
 	fmt.Printf("Publishing results on queue '%s'\n", queueForPublishing.Name)
@@ -39,39 +39,33 @@ func main() {
 	fmt.Printf("\n\nWaiting for indices. Press Crtl+C to exit.\n\n")
 
 	openConnectionToApplication := make(chan bool)
+	indicesReceived := make(chan []string)
 
-	go connector.HandleReceivedIndices(
-		subscriber, func(indices []string) {
-			fmt.Printf("Indices received are: %v\n", indices)
+	go connector.HandleReceivedIndices(subscriber, indicesReceived)
 
-			url := exchange.BuildURL(indices)
+	for indices := range indicesReceived {
+		fmt.Printf("Indices received are: %v\n", indices)
 
-			result, err := exchange.Fetch(url)
-			log.Println("Setting connection and fetching results from Yahoo! API...")
+		url := exchange.BuildURL(indices)
 
-			if err != nil {
-				log.Println(err)
-			}
+		result, err := exchange.Fetch(url)
+		logOperationResult(
+			err, "Setting connection and fetching results from Yahoo! API...",
+		)
 
-			err = result.Parse()
+		err = result.Parse()
+		logOperationResult(
+			err, "Successfully received results from Yahoo! API.",
+		)
 
-			if err != nil {
-				log.Println(err)
-			}
-
-			log.Println("Successfully received results from Yahoo! API.")
-			err = connector.PublishIndices(channel, queueForPublishing.Name, result)
-
-			if err != nil {
-				log.Printf("There was a problem on setting publisher: %v", err)
-			}
-		},
-	)
+		err = connector.PublishIndices(channel, queueForPublishing.Name, result)
+		logOperationResult(err, "Published results to subscribers.")
+	}
 
 	<-openConnectionToApplication
 }
 
-func loadEnvironmentOrCrash() {
+func loadEnvironment() {
 	if envError := godotenv.Load(); envError != nil {
 		log.Fatalf("An error occurred while loading environment: %v", envError)
 	}
@@ -80,5 +74,13 @@ func loadEnvironmentOrCrash() {
 func logFailureAndCrash(err error) {
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func logOperationResult(err error, message string) {
+	if err == nil {
+		log.Println(message)
+	} else {
+		log.Println(err)
 	}
 }

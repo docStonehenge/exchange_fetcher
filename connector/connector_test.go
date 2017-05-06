@@ -167,18 +167,18 @@ func TestDefineQueue(t *testing.T) {
 		t.Fatalf("There was a problem on opening channel: %v", err)
 	}
 
-	queue, err := DefineQueue(channel, "test_queue")
+	queue, err := DefineQueue(channel, "test_queue1")
 
 	if err != nil {
 		t.Fatalf("DefineQueue() should return a queue, but returned error: %v", err)
 	}
 
-	if queue.Name != "test_queue" {
-		t.Fatalf("Queue name should be %s, but is %s", "test_queue", queue.Name)
+	if queue.Name != "test_queue1" {
+		t.Fatalf("Queue name should be %s, but is %s", "test_queue1", queue.Name)
 	}
 
-	if _, err := channel.QueueDelete("test_queue", false, false, false); err != nil {
-		t.Fatal("Queue 'test_queue' should be deleted.")
+	if _, err := channel.QueueDelete("test_queue1", false, false, false); err != nil {
+		t.Fatal("Queue 'test_queue1' should be deleted.")
 	}
 
 	os.Setenv("AMQP_USERNAME", "")
@@ -212,7 +212,7 @@ func TestOpenSubscriber(t *testing.T) {
 		t.Fatalf("There was a problem on opening channel: %v", err)
 	}
 
-	queue, err := DefineQueue(channel, "test_queue")
+	queue, err := DefineQueue(channel, "test_queue2")
 
 	if err != nil {
 		t.Fatalf("There was a problem on defining queue: %v", err)
@@ -241,7 +241,7 @@ func TestOpenSubscriber(t *testing.T) {
 	os.Setenv("AMQP_DEFAULT_PORT", "")
 }
 
-func TestHandleReceivedIndices(t *testing.T) {
+func TestOpenSubscriberRaisesErrorOnOpening(t *testing.T) {
 	os.Setenv("AMQP_USERNAME", "guest")
 	os.Setenv("AMQP_PASSWORD", "guest")
 	os.Setenv("AMQP_DEFAULT_PORT", "5672")
@@ -262,7 +262,57 @@ func TestHandleReceivedIndices(t *testing.T) {
 		t.Fatalf("There was a problem on opening channel: %v", err)
 	}
 
-	queue, err := DefineQueue(channel, "test_queue")
+	queue, err := DefineQueue(channel, "test_queue3")
+
+	if err != nil {
+		t.Fatalf("There was a problem on defining queue: %v", err)
+	}
+
+	testBody := "{\"indices\": [\"^BVSP\", \"AAPL\"]}"
+	channel.Publish(
+		"",
+		queue.Name,
+		false,
+		false,
+		amqp.Publishing{
+			ContentType: "application/json",
+			Body:        []byte(testBody),
+		},
+	)
+
+	_, err = OpenSubscriber(channel, "foo")
+
+	if err == nil {
+		t.Fatal("OpenSubscriber() should raise an error, but nothing was raised")
+	}
+
+	os.Setenv("AMQP_USERNAME", "")
+	os.Setenv("AMQP_PASSWORD", "")
+	os.Setenv("AMQP_DEFAULT_PORT", "")
+}
+
+func TestHandleReceivedIndicesPutsIndicesOnChannel(t *testing.T) {
+	os.Setenv("AMQP_USERNAME", "guest")
+	os.Setenv("AMQP_PASSWORD", "guest")
+	os.Setenv("AMQP_DEFAULT_PORT", "5672")
+
+	connection, err := OpenConnection()
+	defer connection.Close()
+
+	if err != nil {
+		t.Fatal(
+			"There was a problem on opening connection for testing. Maybe RabbitMQ server is down ?! This is an integration test, so it's necessary to have an opened connection to AMQP server.",
+		)
+	}
+
+	channel, err := OpenChannel(connection)
+	defer channel.Close()
+
+	if err != nil {
+		t.Fatalf("There was a problem on opening channel: %v", err)
+	}
+
+	queue, err := DefineQueue(channel, "test_queu4")
 
 	if err != nil {
 		t.Fatalf("There was a problem on defining queue: %v", err)
@@ -288,17 +338,13 @@ func TestHandleReceivedIndices(t *testing.T) {
 		t.Fatal()
 	}
 
-	newArray := []string{}
+	indicesChannel := make(chan []string)
 
-	HandleReceivedIndices(
-		subscriber, func(arr []string) {
-			for _, item := range arr {
-				newArray = append(newArray, item)
-			}
-		},
-	)
+	go HandleReceivedIndices(subscriber, indicesChannel)
+	receivedIndices := <-indicesChannel
+	close(indicesChannel)
 
-	if strings.Join(newArray, ",") != "^BVSP,AAPL" {
+	if strings.Join(receivedIndices, ",") != "^BVSP,AAPL" {
 		t.Fatal("Should handle subscriber received indices with handler, but nothing happened.")
 	}
 
@@ -328,7 +374,7 @@ func TestPublishIndices(t *testing.T) {
 		t.Fatalf("There was a problem on opening channel: %v", err)
 	}
 
-	queue, err := DefineQueue(channel, "test_queue")
+	queue, err := DefineQueue(channel, "test_queue5")
 
 	if err != nil {
 		t.Fatalf("There was a problem on defining queue: %v", err)
@@ -341,11 +387,7 @@ func TestPublishIndices(t *testing.T) {
 		},
 	}
 
-	publishError := PublishIndices(channel, queue.Name, result)
-
-	if publishError != nil {
-		t.Fatalf("PublishIndices should run without errors, but an error was raised: %v", err)
-	}
+	PublishIndices(channel, queue.Name, result)
 
 	msgs, err := channel.Consume(
 		queue.Name, "", true, false, false, false, nil,
@@ -359,6 +401,51 @@ func TestPublishIndices(t *testing.T) {
 		if parsedBody != expected {
 			t.Fatalf("Published body should be %s, but it is %s", expected, parsedBody)
 		}
+	}
+
+	os.Setenv("AMQP_USERNAME", "")
+	os.Setenv("AMQP_PASSWORD", "")
+	os.Setenv("AMQP_DEFAULT_PORT", "")
+}
+
+func TestPublishIndicesRaisesErrorOnPublishProblem(t *testing.T) {
+	os.Setenv("AMQP_USERNAME", "guest")
+	os.Setenv("AMQP_PASSWORD", "guest")
+	os.Setenv("AMQP_DEFAULT_PORT", "5672")
+
+	connection, err := OpenConnection()
+	defer connection.Close()
+
+	if err != nil {
+		t.Fatal(
+			"There was a problem on opening connection for testing. Maybe RabbitMQ server is down ?! This is an integration test, so it's necessary to have an opened connection to AMQP server.",
+		)
+	}
+
+	channel, err := OpenChannel(connection)
+
+	if err != nil {
+		t.Fatalf("There was a problem on opening channel: %v", err)
+	}
+
+	queue, err := DefineQueue(channel, "test_queue6")
+
+	if err != nil {
+		t.Fatalf("There was a problem on defining queue: %v", err)
+	}
+
+	result := &exchange.ExchangesResult{
+		Exchanges: map[string]exchange.Exchange{
+			"Nikkei 225":    exchange.Exchange{Name: "Nikkei 225", Symbol: "^n225", PercentChange: "-0.91%", ChangeInPoints: "-172.98", LastTradeDate: "4/14/2017", LastTradeTime: "3:15pm"},
+			"Alphabet Inc.": exchange.Exchange{Name: "Alphabet Inc.", Symbol: "GOOGL", PercentChange: "-0.09%", ChangeInPoints: "-0.76", LastTradeDate: "4/13/2017", LastTradeTime: "4:00pm"},
+		},
+	}
+
+	channel.Close()
+	publishError := PublishIndices(channel, queue.Name, result)
+
+	if publishError == nil {
+		t.Fatal("PublishIndices should run with errors, but no error was raised")
 	}
 
 	os.Setenv("AMQP_USERNAME", "")
