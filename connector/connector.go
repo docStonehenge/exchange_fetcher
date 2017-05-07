@@ -74,9 +74,13 @@ func HandleReceivedIndices(subscriber <-chan amqp.Delivery, indicesChannel chan 
 		var jsonIndices map[string]interface{}
 		json.Unmarshal(delivery.Body, &jsonIndices)
 
-		for _, idx := range jsonIndices["indices"].([]interface{}) {
-			if i, ok := idx.(string); ok {
-				indices = append(indices, i)
+		parsedIndicesMap, ok := jsonIndices["indices"].([]interface{})
+
+		if ok {
+			for _, idx := range parsedIndicesMap {
+				if i, ok := idx.(string); ok {
+					indices = append(indices, i)
+				}
 			}
 		}
 
