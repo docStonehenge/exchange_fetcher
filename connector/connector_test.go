@@ -1,3 +1,5 @@
+// +build integration
+
 package connector
 
 import (
@@ -186,11 +188,6 @@ func TestDefineQueue(t *testing.T) {
 	os.Setenv("AMQP_DEFAULT_PORT", "")
 }
 
-// These are integration tests that must be run only on controlled environment, since amqp connection cannot be closed from within the test.
-// To run these tests:
-//   * uncomment the imports
-//   * open RabbitMQ dashboard at http://localhost:15672 and force-close connection after test run, to exit it.
-
 func TestOpenSubscriber(t *testing.T) {
 	integrationEnvironmentForTest(
 		t,
@@ -207,11 +204,13 @@ func TestOpenSubscriber(t *testing.T) {
 				},
 			)
 
-			_, err := OpenSubscriber(channel, queueName)
+			sub, err := OpenSubscriber(channel, queueName)
 
 			if err != nil {
 				t.Fatalf("OpenSubscriber() should return a channel for messages, but returned error: %v", err)
 			}
+
+			<-sub
 		},
 	)
 }
@@ -368,12 +367,11 @@ func TestPublishIndices(t *testing.T) {
 
 			expected := "{\"Alphabet Inc.\":{\"Name\":\"Alphabet Inc.\",\"Symbol\":\"GOOGL\",\"PercentChange\":\"-0.09%\",\"ChangeInPoints\":\"-0.76\",\"LastTradeDate\":\"4/13/2017\",\"LastTradeTime\":\"4:00pm\"},\"Nikkei 225\":{\"Name\":\"Nikkei 225\",\"Symbol\":\"^n225\",\"PercentChange\":\"-0.91%\",\"ChangeInPoints\":\"-172.98\",\"LastTradeDate\":\"4/14/2017\",\"LastTradeTime\":\"3:15pm\"}}"
 
-			for msg := range msgs {
-				parsedBody := string(msg.Body)
+			msg := <-msgs
+			parsedBody := string(msg.Body)
 
-				if parsedBody != expected {
-					t.Fatalf("Published body should be %s, but it is %s", expected, parsedBody)
-				}
+			if parsedBody != expected {
+				t.Fatalf("Published body should be %s, but it is %s", expected, parsedBody)
 			}
 		},
 	)
