@@ -75,7 +75,7 @@ func HandleReceivedIndices(subscriber <-chan amqp.Delivery, indicesChannel chan 
 }
 
 func PublishIndices(channel *amqp.Channel, queueName string, result *exchange.ExchangesResult) error {
-	response, err := json.Marshal(result.Exchanges)
+	response, err := indices.Join(result.Exchanges)
 
 	if err != nil {
 		return err

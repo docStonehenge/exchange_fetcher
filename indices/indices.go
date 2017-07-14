@@ -1,6 +1,9 @@
 package indices
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"github.com/docStonehenge/exchange_fetcher/exchange"
+)
 
 func Split(body []byte) (indices []string) {
 	var idxJSON map[string]interface{}
@@ -16,4 +19,14 @@ func Split(body []byte) (indices []string) {
 	}
 
 	return
+}
+
+func Join(exchanges map[string]exchange.Exchange) ([]byte, error) {
+	body, err := json.Marshal(exchanges)
+
+	if err == nil {
+		return body, nil
+	}
+
+	return nil, err
 }
