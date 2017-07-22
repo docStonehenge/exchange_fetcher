@@ -1,9 +1,9 @@
 package connector
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/docStonehenge/exchange_fetcher/exchange"
+	"github.com/docStonehenge/exchange_fetcher/indices"
 	"github.com/streadway/amqp"
 	"os"
 )
@@ -69,27 +69,12 @@ func OpenSubscriber(channel *amqp.Channel, queueName string) (<-chan amqp.Delive
 
 func HandleReceivedIndices(subscriber <-chan amqp.Delivery, indicesChannel chan []string) {
 	for delivery := range subscriber {
-		indices := []string{}
-
-		var jsonIndices map[string]interface{}
-		json.Unmarshal(delivery.Body, &jsonIndices)
-
-		parsedIndicesMap, ok := jsonIndices["indices"].([]interface{})
-
-		if ok {
-			for _, idx := range parsedIndicesMap {
-				if i, ok := idx.(string); ok {
-					indices = append(indices, i)
-				}
-			}
-		}
-
-		indicesChannel <- indices
+		indicesChannel <- indices.Split(delivery.Body)
 	}
 }
 
 func PublishIndices(channel *amqp.Channel, queueName string, result *exchange.ExchangesResult) error {
-	response, err := json.Marshal(result.Exchanges)
+	response, err := indices.Join(result.Exchanges)
 
 	if err != nil {
 		return err
