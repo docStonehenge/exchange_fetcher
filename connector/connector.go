@@ -1,7 +1,6 @@
 package connector
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/docStonehenge/exchange_fetcher/exchange"
 	"github.com/docStonehenge/exchange_fetcher/indices"
