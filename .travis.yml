@@ -1,0 +1,17 @@
+language: go
+
+go:
+  - 1.7.x
+
+services:
+  - rabbitmq
+
+env:
+  - AMQP_USERNAME=guest AMQP_PASSWORD=guest AMQP_DEFAULT_PORT=5672
+
+before_install:
+  - go get github.com/streadway/amqp
+  - go get github.com/joho/godotenv
+  - go get -v github.com/golang/lint/golint
+
+script: go test -v -cover -tags integration ./exchange ./indices ./connector
