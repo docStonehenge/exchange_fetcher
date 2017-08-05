@@ -3,9 +3,11 @@ package indices
 import (
 	"encoding/json"
 	"github.com/docStonehenge/exchange_fetcher/exchange"
+	"strings"
+	"unicode"
 )
 
-func Split(body []byte) (indices []string) {
+func SplitJSONBody(body []byte) (indices []string) {
 	var idxJSON map[string]interface{}
 
 	json.Unmarshal(body, &idxJSON)
@@ -18,6 +20,16 @@ func Split(body []byte) (indices []string) {
 		}
 	}
 
+	return
+}
+
+func SplitListBody(body string) (indices []string) {
+	removeSpacesAndCommas := func(character rune) bool {
+		return unicode.IsSpace(character) ||
+			character == ',' || character == ';'
+	}
+
+	indices = strings.FieldsFunc(body, removeSpacesAndCommas)
 	return
 }
 

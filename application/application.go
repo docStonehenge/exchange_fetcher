@@ -83,7 +83,7 @@ func runProcessOnMQ() {
 
 func logIndicesRequest() {
 	result, _ := indices.Join(
-		requestIndices(indices.Split([]byte(symbols))).Exchanges,
+		requestIndices(indices.SplitJSONBody([]byte(symbols))).Exchanges,
 	)
 
 	logOperationResult(nil, fmt.Sprintf("%s", result))
