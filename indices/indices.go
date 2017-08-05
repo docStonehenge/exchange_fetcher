@@ -23,14 +23,13 @@ func SplitJSONBody(body []byte) (indices []string) {
 	return
 }
 
-func SplitListBody(body string) (indices []string) {
+func SplitListBody(body string) []string {
 	removeSpacesAndCommas := func(character rune) bool {
 		return unicode.IsSpace(character) ||
 			character == ',' || character == ';'
 	}
 
-	indices = strings.FieldsFunc(body, removeSpacesAndCommas)
-	return
+	return strings.FieldsFunc(body, removeSpacesAndCommas)
 }
 
 func Join(exchanges map[string]exchange.Exchange) ([]byte, error) {
