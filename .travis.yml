@@ -14,4 +14,4 @@ before_install:
   - go get github.com/joho/godotenv
   - go get -v github.com/golang/lint/golint
 
-script: go test -v -cover -tags integration ./... -x
+script: go test -v -cover -tags integration ./exchange ./indices ./connector ./slice
