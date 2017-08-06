@@ -24,8 +24,12 @@ The command-line can be used in two ways:
 
 Directly:
 ```
-$> exchange_fetcher --indices '{"indices":["GOOGL"]}'
-// This will make an HTTP request directly to Yahoo! finance API and return a JSON response of the stocks sent.
+$> exchange_fetcher --indices AAPL
+// This will make an HTTP request directly to Yahoo! finance API and return a JSON response for AAPL stock result.
+```
+```
+$> exchange_fetcher --indices 'AAPL, GOOGL'
+// You can send a comma-separated list of symbols for multiple stock results !!
 ```
 
 Externally:
