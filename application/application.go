@@ -6,12 +6,13 @@ import (
 	"github.com/docStonehenge/exchange_fetcher/connector"
 	"github.com/docStonehenge/exchange_fetcher/exchange"
 	"github.com/docStonehenge/exchange_fetcher/indices"
+	"github.com/docStonehenge/exchange_fetcher/slice"
 	"github.com/joho/godotenv"
 	"log"
 	"os"
 )
 
-var symbols string
+var symbols slice.StringSlice
 var onQueue bool
 
 func Run() {
@@ -27,12 +28,12 @@ func Run() {
 func parseCommandFlags() {
 	flag.BoolVar(
 		&onQueue, "mq", false,
-		"Set to true if you want to run on RabbitMQ connection with a client application",
+		"Runs application on an open RabbitMQ connection with a client application",
 	)
 
-	flag.StringVar(
-		&symbols, "indices", "{}",
-		"JSON representation with indices key pointing to an array of symbols",
+	flag.Var(
+		&symbols, "indices",
+		"List of comma-separated symbols.\n\tExample:\n\t\t-indices=AAPL\n\t\t-indices AAPL\n\t\t-indices='AAPL, GOOGL'\n\t\t-indices 'AAPL, GOOGL'",
 	)
 
 	flag.Parse()
@@ -82,11 +83,8 @@ func runProcessOnMQ() {
 }
 
 func logIndicesRequest() {
-	result, _ := indices.Join(
-		requestIndices(indices.Split([]byte(symbols))).Exchanges,
-	)
-
-	logOperationResult(nil, fmt.Sprintf("%s", result))
+	result, err := indices.Join(requestIndices(symbols).Exchanges)
+	logOperationResult(err, fmt.Sprintf("%s", result))
 }
 
 func requestIndices(indices []string) *exchange.ExchangesResult {

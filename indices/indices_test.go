@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestSplitCorrectlySeparatesIndicesOnJSONstring(t *testing.T) {
+func TestSplitJSONBodyCorrectlySeparatesIndicesOnJSONstring(t *testing.T) {
 	results := []struct {
 		body string
 		exp  []string
@@ -17,13 +17,13 @@ func TestSplitCorrectlySeparatesIndicesOnJSONstring(t *testing.T) {
 	}
 
 	for _, r := range results {
-		if actual := Split([]byte(r.body)); strings.Join(actual, ", ") != strings.Join(r.exp, ", ") {
-			t.Fatalf("indices.Split should separate indices correctly, but result was %v", actual)
+		if actual := SplitJSONBody([]byte(r.body)); strings.Join(actual, ", ") != strings.Join(r.exp, ", ") {
+			t.Fatalf("indices.SplitJSONBody should separate indices correctly, but result was %v", actual)
 		}
 	}
 }
 
-func TestSplitReturnsEmptyArrayWhenArgumentIsEmpty(t *testing.T) {
+func TestSplitJSONBodyReturnsEmptyArrayWhenArgumentIsEmpty(t *testing.T) {
 	results := []struct {
 		body string
 		exp  []string
@@ -33,8 +33,36 @@ func TestSplitReturnsEmptyArrayWhenArgumentIsEmpty(t *testing.T) {
 	}
 
 	for _, r := range results {
-		if actual := Split([]byte(r.body)); strings.Join(actual, ", ") != strings.Join(r.exp, ", ") {
-			t.Fatalf("indices.Split should return an empty array, but result was %v", actual)
+		if actual := SplitJSONBody([]byte(r.body)); strings.Join(actual, ", ") != strings.Join(r.exp, ", ") {
+			t.Fatalf("indices.SplitAsJSON should return an empty array, but result was %v", actual)
+		}
+	}
+}
+
+func TestSplitListBodyCorrectlySeparatesIndicesOnString(t *testing.T) {
+	results := []struct {
+		body string
+		exp  []string
+	}{
+		{body: "AAPL, GOOGL", exp: []string{"AAPL", "GOOGL"}},
+		{body: "MGLU3.SA", exp: []string{"MGLU3.SA"}},
+		{body: "MGLU3.SA,BBSE3.SA", exp: []string{"MGLU3.SA", "BBSE3.SA"}},
+		{body: "MGLU3.SA,BBSE3.SA,  AAPL, GOOGL", exp: []string{"MGLU3.SA", "BBSE3.SA", "AAPL", "GOOGL"}},
+		{body: "MGLU3.SA,BBSE3.SA,  AAPL; GOOGL;TPIS3.SA", exp: []string{"MGLU3.SA", "BBSE3.SA", "AAPL", "GOOGL", "TPIS3.SA"}},
+		{body: "", exp: []string{}},
+	}
+
+	for _, r := range results {
+		actual := SplitListBody(r.body)
+
+		if len(actual) != len(r.exp) {
+			t.Fatalf("indices.SplitListBody should return an array with %d elements, but its size is %d", len(r.exp), len(actual))
+		}
+
+		for count, index := range actual {
+			if index != r.exp[count] {
+				t.Fatalf("indices.SplitListBody should return an array with element as %v, but element is %v", r.exp[count], index)
+			}
 		}
 	}
 }

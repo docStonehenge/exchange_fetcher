@@ -85,19 +85,42 @@ func TestParsingIndicesCorrectlyFromMessageQueue(t *testing.T) {
 	}
 }
 
-func TestParsingIndicesCorrectlyFromCommandLine(t *testing.T) {
-	cmd := exec.Command("exchange_fetcher", "-indices", "{\"indices\":[\"AAPL\"]}")
+func TestParsingOneIndexCorrectlyFromCommandLine(t *testing.T) {
+	index := "AAPL"
+
+	cmd := exec.Command("exchange_fetcher", "-indices="+index)
 	var output bytes.Buffer
 
 	cmd.Stdout = &output
 
 	if err := cmd.Run(); err == nil {
 		if strings.Contains(output.String(), "Connecting to AMQP server...") {
-			t.Fatal("Using -c flag should not start MQ connection, but connection has been started")
+			t.Fatal("Using -indices flag should not start MQ connection, but connection has been started")
 		}
 
-		if !strings.Contains(output.String(), "{\"Apple Inc.\":{\"Name\":\"Apple Inc.\",\"Symbol\":\"AAPL\"") {
-			t.Fatalf("Application should print correct return JSON, but printed only: %s", output.String())
+		if !strings.Contains(output.String(), "Indices received are: [AAPL]") {
+			t.Fatalf("Application should receive %s, but it is indicating: %s", index, output.String())
+		}
+	} else {
+		t.Fatal(err)
+	}
+}
+
+func TestParsingMoreThanOneIndexCorrectlyFromCommandLine(t *testing.T) {
+	indices := "AAPL, GOOGL, MGLU3.SA"
+
+	cmd := exec.Command("exchange_fetcher", "-indices", indices)
+	var output bytes.Buffer
+
+	cmd.Stdout = &output
+
+	if err := cmd.Run(); err == nil {
+		if strings.Contains(output.String(), "Connecting to AMQP server...") {
+			t.Fatal("Using -indices flag should not start MQ connection, but connection has been started")
+		}
+
+		if !strings.Contains(output.String(), "Indices received are: [AAPL GOOGL MGLU3.SA]") {
+			t.Fatalf("Application should receive %s, but it is indicating: %s", indices, output.String())
 		}
 	} else {
 		t.Fatal(err)
