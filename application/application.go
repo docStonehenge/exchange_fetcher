@@ -28,11 +28,12 @@ func Run() {
 func parseCommandFlags() {
 	flag.BoolVar(
 		&onQueue, "mq", false,
-		"Set to true if you want to run on RabbitMQ connection with a client application",
+		"Runs application on an open RabbitMQ connection with a client application",
 	)
 
 	flag.Var(
-		&symbols, "indices", "List of comma-separated symbols, like: --indices='AAPL, GOOGL' or --indices 'AAPL, GOOGL'",
+		&symbols, "indices",
+		"List of comma-separated symbols.\n\tExample:\n\t\t-indices=AAPL\n\t\t-indices AAPL\n\t\t-indices='AAPL, GOOGL'\n\t\t-indices 'AAPL, GOOGL'",
 	)
 
 	flag.Parse()

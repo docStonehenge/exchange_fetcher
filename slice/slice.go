@@ -15,7 +15,7 @@ func (slice *StringSlice) Set(value string) error {
 	*slice = StringSlice(indices.SplitListBody(value))
 
 	if len(*slice) == 0 {
-		return &StringSliceError{"List of values should not be empty."}
+		return &StringSliceError{"List of symbols should not be empty."}
 	}
 
 	return nil
