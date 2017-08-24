@@ -58,8 +58,14 @@ $> exchange_fetcher -mq
 
 ## Contributing
 Feel free to open a pull request, point an issue. I am on the search of learning Go the best way possible, so every opinion and any line of code are welcome!
-Fork this repository, make your changes and open a pull request.
 
+  * First of all, fork this repository.
+  * Run `go get github.com/docStonehenge/exchange_fetcher`; then
+  * `cd $GOPATH/src/github.com/docStonehenge/exchange_fetcher`; then
+  * `git remote set-url origin your-fork-url`; then
+  * `go get -u github.com/golang/dep/cmd/dep`; then
+  * `dep ensure`...whoa, then finally
+  * Make your changes, following the lovely TDD approach :-P
 ## License
 MIT License. Please, read LICENSE file.
 
