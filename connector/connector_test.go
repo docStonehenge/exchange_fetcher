@@ -354,8 +354,8 @@ func TestPublishIndices(t *testing.T) {
 		func(channel *amqp.Channel, queueName string) {
 			result := &exchange.ExchangesResult{
 				Exchanges: map[string]exchange.Exchange{
-					"Nikkei 225":    exchange.Exchange{Name: "Nikkei 225", Symbol: "^n225", PercentChange: "-0.91%", ChangeInPoints: "-172.98", LastTradeDate: "4/14/2017", LastTradeTime: "3:15pm"},
-					"Alphabet Inc.": exchange.Exchange{Name: "Alphabet Inc.", Symbol: "GOOGL", PercentChange: "-0.09%", ChangeInPoints: "-0.76", LastTradeDate: "4/13/2017", LastTradeTime: "4:00pm"},
+					"Nikkei 225":    exchange.Exchange{Name: "Nikkei 225", Symbol: "^n225", PercentChange: "-0.91%", ChangeInPoints: "-172.98", Price: 78000.0000, PreviousClose: 70000.0000, OpenPrice: 76592.1150, LastTradeDate: "4/14/2017", LastTradeTime: "3:15pm"},
+					"Alphabet Inc.": exchange.Exchange{Name: "Alphabet Inc.", Symbol: "GOOGL", PercentChange: "-0.09%", ChangeInPoints: "-0.76", Price: 78000.0000, PreviousClose: 70000.0000, OpenPrice: 76592.1150, LastTradeDate: "4/13/2017", LastTradeTime: "4:00pm"},
 				},
 			}
 
@@ -365,7 +365,7 @@ func TestPublishIndices(t *testing.T) {
 				queueName, "", true, false, false, false, nil,
 			)
 
-			expected := "{\"Alphabet Inc.\":{\"Name\":\"Alphabet Inc.\",\"Symbol\":\"GOOGL\",\"PercentChange\":\"-0.09%\",\"ChangeInPoints\":\"-0.76\",\"LastTradeDate\":\"4/13/2017\",\"LastTradeTime\":\"4:00pm\"},\"Nikkei 225\":{\"Name\":\"Nikkei 225\",\"Symbol\":\"^n225\",\"PercentChange\":\"-0.91%\",\"ChangeInPoints\":\"-172.98\",\"LastTradeDate\":\"4/14/2017\",\"LastTradeTime\":\"3:15pm\"}}"
+			expected := "{\"Alphabet Inc.\":{\"Name\":\"Alphabet Inc.\",\"Symbol\":\"GOOGL\",\"Price\":78000,\"PreviousClose\":70000,\"OpenPrice\":76592.115,\"PercentChange\":\"-0.09%\",\"ChangeInPoints\":\"-0.76\",\"LastTradeDate\":\"4/13/2017\",\"LastTradeTime\":\"4:00pm\"},\"Nikkei 225\":{\"Name\":\"Nikkei 225\",\"Symbol\":\"^n225\",\"Price\":78000,\"PreviousClose\":70000,\"OpenPrice\":76592.115,\"PercentChange\":\"-0.91%\",\"ChangeInPoints\":\"-172.98\",\"LastTradeDate\":\"4/14/2017\",\"LastTradeTime\":\"3:15pm\"}}"
 
 			msg := <-msgs
 			parsedBody := string(msg.Body)
@@ -383,8 +383,8 @@ func TestPublishIndicesRaisesErrorOnPublishProblem(t *testing.T) {
 		func(channel *amqp.Channel, queueName string) {
 			result := &exchange.ExchangesResult{
 				Exchanges: map[string]exchange.Exchange{
-					"Nikkei 225":    exchange.Exchange{Name: "Nikkei 225", Symbol: "^n225", PercentChange: "-0.91%", ChangeInPoints: "-172.98", LastTradeDate: "4/14/2017", LastTradeTime: "3:15pm"},
-					"Alphabet Inc.": exchange.Exchange{Name: "Alphabet Inc.", Symbol: "GOOGL", PercentChange: "-0.09%", ChangeInPoints: "-0.76", LastTradeDate: "4/13/2017", LastTradeTime: "4:00pm"},
+					"Nikkei 225":    exchange.Exchange{Name: "Nikkei 225", Symbol: "^n225", PercentChange: "-0.91%", ChangeInPoints: "-172.98", Price: 78000.0000, PreviousClose: 70000.0000, OpenPrice: 76592.1150, LastTradeDate: "4/14/2017", LastTradeTime: "3:15pm"},
+					"Alphabet Inc.": exchange.Exchange{Name: "Alphabet Inc.", Symbol: "GOOGL", PercentChange: "-0.09%", ChangeInPoints: "-0.76", Price: 78000.0000, PreviousClose: 70000.0000, OpenPrice: 76592.1150, LastTradeDate: "4/13/2017", LastTradeTime: "4:00pm"},
 				},
 			}
 

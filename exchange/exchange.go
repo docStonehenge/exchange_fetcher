@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -17,7 +18,9 @@ type ExchangesResult struct {
 }
 
 type Exchange struct {
-	Name, Symbol, PercentChange, ChangeInPoints, LastTradeDate, LastTradeTime string
+	Name, Symbol                                                string
+	Price, PreviousClose, OpenPrice                             float64
+	PercentChange, ChangeInPoints, LastTradeDate, LastTradeTime string
 }
 
 type malformedJSONError struct {
@@ -101,6 +104,9 @@ func (ex *ExchangesResult) setExchangeByNameKey(parsedExchange map[string]interf
 		Symbol:         parsedExchange["Symbol"].(string),
 		PercentChange:  parsedExchange["PercentChange"].(string),
 		ChangeInPoints: parsedExchange["Change"].(string),
+		Price:          parseAsFloat(parsedExchange["LastTradePriceOnly"]),
+		PreviousClose:  parseAsFloat(parsedExchange["PreviousClose"]),
+		OpenPrice:      parseAsFloat(parsedExchange["Open"]),
 		LastTradeDate:  parsedExchange["LastTradeDate"].(string),
 		LastTradeTime:  parsedExchange["LastTradeTime"].(string),
 	}
@@ -110,4 +116,14 @@ func (ex *ExchangesResult) setExchangeByNameKey(parsedExchange map[string]interf
 
 func (err *malformedJSONError) Error() string {
 	return err.message
+}
+
+func parseAsFloat(value interface{}) float64 {
+	strValue := value.(string)
+
+	if floatValue, err := strconv.ParseFloat(strValue, 64); err == nil {
+		return floatValue
+	}
+
+	return 0.0
 }
