@@ -9,7 +9,8 @@ To anyone who is learning Go, like me, is an enthusiast of Go, also like me...to
 Finally, I think, to anyone who likes programming, since you can contribute to this repo at any time!
 
 ## Requirements
-This application was developed with Go `1.7.3`.
+This application was initially developed using Go 1.7.3.
+For contributing, because of packages used on dependency management (for now), it requires at least 1.8.x versions.
 To operate on message queueing, it's necessary to install <a href="https://www.rabbitmq.com/">RabbitMQ</a>.
 
 ## Installation
@@ -48,7 +49,7 @@ $> exchange_fetcher -mq
 ```
 
 ```
-{"Apple Inc.":{"Name":"Apple Inc.","Symbol":"AAPL","PercentChange":"-0.2703%","ChangeInPoints":"-0.4063","LastTradeDate":"7/21/2017","LastTradeTime":"12:03pm"}}
+{"Apple Inc.":{"Name":"Apple Inc.","Symbol":"AAPL","Price":155.39,"PreviousClose":153.48,"OpenPrice":154.18,"PercentChange":"+1.24%","ChangeInPoints":"+1.91","LastTradeDate":"10/5/2017","LastTradeTime":"4:00pm"}}
 // result as a JSON representation
 ```
 

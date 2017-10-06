@@ -60,7 +60,7 @@ func TestBuildURLWithMoreThanOneIndex(t *testing.T) {
 }
 
 func TestParseForOneIndex(t *testing.T) {
-	jsonResult := "{\"query\":{\"results\":{\"quote\":{\"Name\":\"Nikkei 225\",\"Symbol\":\"^n225\",\"PercentChange\":\"-0.91%\",\"Change\":\"-172.98\",\"LastTradeDate\":\"4/14/2017\",\"LastTradeTime\":\"3:15pm\"}}}}"
+	jsonResult := "{\"query\":{\"results\":{\"quote\":{\"Name\":\"Nikkei 225\",\"Symbol\":\"^n225\",\"PercentChange\":\"-0.91%\",\"Change\":\"-172.98\",\"LastTradeDate\":\"4/14/2017\",\"LastTradeTime\":\"3:15pm\",\"Open\":\"76592.1150\",\"PreviousClose\":\"70000.0000\",\"LastTradePriceOnly\":\"78000.0000\"}}}}"
 
 	exchangeResult := ExchangesResult{rawResult: jsonResult}
 
@@ -87,6 +87,10 @@ func TestParseForOneIndex(t *testing.T) {
 			t.Fatalf("Parsed change in points should be %s, is %s", "-172.98", exchange.ChangeInPoints)
 		}
 
+		if exchange.Price != 78000.0000 {
+			t.Fatalf("Parsed price should be %f, is %f", 78000.0000, exchange.Price)
+		}
+
 		if exchange.LastTradeDate != "4/14/2017" {
 			t.Fatalf("Parsed 'last trade date' should be %s, is %s", "4/14/2017", exchange.LastTradeDate)
 		}
@@ -94,19 +98,77 @@ func TestParseForOneIndex(t *testing.T) {
 		if exchange.LastTradeTime != "3:15pm" {
 			t.Fatalf("Parsed 'last trade time' should be %s, is %s", "3:15pm", exchange.LastTradeTime)
 		}
+
+		if exchange.PreviousClose != 70000.0000 {
+			t.Fatalf("Parsed 'previous close' should be %f, is %f", 70000.0000, exchange.PreviousClose)
+		}
+
+		if exchange.OpenPrice != 76592.1150 {
+			t.Fatalf("Parsed 'open price' should be %f, is %f", 76592.1150, exchange.OpenPrice)
+		}
+	}
+}
+
+func TestParseWithZeroValueWhenAnyFloatIsNotParseable(t *testing.T) {
+	jsonResult := "{\"query\":{\"results\":{\"quote\":{\"Name\":\"Nikkei 225\",\"Symbol\":\"^n225\",\"PercentChange\":\"-0.91%\",\"Change\":\"-172.98\",\"LastTradeDate\":\"4/14/2017\",\"LastTradeTime\":\"3:15pm\",\"Open\":\"76592.1150\",\"PreviousClose\":\"-\",\"LastTradePriceOnly\":\"78000.0000\"}}}}"
+
+	exchangeResult := ExchangesResult{rawResult: jsonResult}
+
+	exchangeResult.Parse()
+
+	for key, exchange := range exchangeResult.Exchanges {
+		if key != "Nikkei 225" {
+			t.Fatalf("Exchanges list should have key %s, but it is %s", "Nikkei 225", key)
+		}
+
+		if exchange.Name != "Nikkei 225" {
+			t.Fatalf("Exchange name should be %s, is %s", "Nikkei 225", exchange.Name)
+		}
+
+		if exchange.Symbol != "^n225" {
+			t.Fatalf("Exchange symbol should be %s, is %s", "^n225", exchange.Symbol)
+		}
+
+		if exchange.PercentChange != "-0.91%" {
+			t.Fatalf("Parsed percent change should be %s, is %s", "-0.91%", exchange.PercentChange)
+		}
+
+		if exchange.ChangeInPoints != "-172.98" {
+			t.Fatalf("Parsed change in points should be %s, is %s", "-172.98", exchange.ChangeInPoints)
+		}
+
+		if exchange.Price != 78000.0000 {
+			t.Fatalf("Parsed price should be %f, is %f", 78000.0000, exchange.Price)
+		}
+
+		if exchange.LastTradeDate != "4/14/2017" {
+			t.Fatalf("Parsed 'last trade date' should be %s, is %s", "4/14/2017", exchange.LastTradeDate)
+		}
+
+		if exchange.LastTradeTime != "3:15pm" {
+			t.Fatalf("Parsed 'last trade time' should be %s, is %s", "3:15pm", exchange.LastTradeTime)
+		}
+
+		if exchange.PreviousClose != 0.0 {
+			t.Fatalf("Parsed 'previous close' should be %f, is %f", 0.0, exchange.PreviousClose)
+		}
+
+		if exchange.OpenPrice != 76592.1150 {
+			t.Fatalf("Parsed 'open price' should be %f, is %f", 76592.1150, exchange.OpenPrice)
+		}
 	}
 }
 
 func TestParseForMoreThanOneIndex(t *testing.T) {
 	exchangeResult := ExchangesResult{
-		rawResult: "{\"query\":{\"results\":{\"quote\":[{\"Name\":\"Nikkei 225\",\"Symbol\":\"^n225\",\"PercentChange\":\"-0.91%\",\"Change\":\"-172.98\",\"LastTradeDate\":\"4/14/2017\",\"LastTradeTime\":\"3:15pm\"},{\"Name\":\"Alphabet Inc.\",\"Symbol\":\"GOOGL\",\"PercentChange\":\"-0.09%\",\"Change\":\"-0.76\",\"LastTradeDate\":\"4/13/2017\",\"LastTradeTime\":\"4:00pm\"}]}}}",
+		rawResult: "{\"query\":{\"results\":{\"quote\":[{\"Name\":\"Nikkei 225\",\"Symbol\":\"^n225\",\"PercentChange\":\"-0.91%\",\"Change\":\"-172.98\",\"LastTradeDate\":\"4/14/2017\",\"LastTradeTime\":\"3:15pm\",\"Open\":\"76592.1150\",\"PreviousClose\":\"70000.0000\",\"LastTradePriceOnly\":\"78000.0000\"},{\"Name\":\"Alphabet Inc.\",\"Symbol\":\"GOOGL\",\"PercentChange\":\"-0.09%\",\"Change\":\"-0.76\",\"LastTradeDate\":\"4/13/2017\",\"LastTradeTime\":\"4:00pm\",\"Open\":\"76592.1150\",\"PreviousClose\":\"70000.0000\",\"LastTradePriceOnly\":\"78000.0000\"}]}}}",
 	}
 
 	exchangeResult.Parse()
 
 	expectedList := map[string]Exchange{
-		"Nikkei 225":    Exchange{Name: "Nikkei 225", Symbol: "^n225", PercentChange: "-0.91%", ChangeInPoints: "-172.98", LastTradeDate: "4/14/2017", LastTradeTime: "3:15pm"},
-		"Alphabet Inc.": Exchange{Name: "Alphabet Inc.", Symbol: "GOOGL", PercentChange: "-0.09%", ChangeInPoints: "-0.76", LastTradeDate: "4/13/2017", LastTradeTime: "4:00pm"},
+		"Nikkei 225":    Exchange{Name: "Nikkei 225", Symbol: "^n225", PercentChange: "-0.91%", ChangeInPoints: "-172.98", Price: 78000.0000, PreviousClose: 70000.0000, OpenPrice: 76592.1150, LastTradeDate: "4/14/2017", LastTradeTime: "3:15pm"},
+		"Alphabet Inc.": Exchange{Name: "Alphabet Inc.", Symbol: "GOOGL", PercentChange: "-0.09%", ChangeInPoints: "-0.76", Price: 78000.0000, PreviousClose: 70000.0000, OpenPrice: 76592.1150, LastTradeDate: "4/13/2017", LastTradeTime: "4:00pm"},
 	}
 
 	nikkei := exchangeResult.Exchanges["Nikkei 225"]

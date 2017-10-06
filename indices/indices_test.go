@@ -70,11 +70,14 @@ func TestSplitListBodyCorrectlySeparatesIndicesOnString(t *testing.T) {
 func TestJoinReturnsParsedJSONExchanges(t *testing.T) {
 	exchanges := make(map[string]exchange.Exchange)
 
-	exp := "{\"Bar\":{\"Name\":\"Bar\",\"Symbol\":\"B\",\"PercentChange\":\"2%\",\"ChangeInPoints\":\"2.0\",\"LastTradeDate\":\"12/01/2017\",\"LastTradeTime\":\"12:31pm\"},\"Foo\":{\"Name\":\"Foo\",\"Symbol\":\"F\",\"PercentChange\":\"2%\",\"ChangeInPoints\":\"2.0\",\"LastTradeDate\":\"12/01/2017\",\"LastTradeTime\":\"12:31pm\"}}"
+	exp := "{\"Bar\":{\"Name\":\"Bar\",\"Symbol\":\"B\",\"Price\":30.89,\"PreviousClose\":40.82,\"OpenPrice\":32.79,\"PercentChange\":\"2%\",\"ChangeInPoints\":\"2.0\",\"LastTradeDate\":\"12/01/2017\",\"LastTradeTime\":\"12:31pm\"},\"Foo\":{\"Name\":\"Foo\",\"Symbol\":\"F\",\"Price\":30.89,\"PreviousClose\":40.82,\"OpenPrice\":32.79,\"PercentChange\":\"2%\",\"ChangeInPoints\":\"2.0\",\"LastTradeDate\":\"12/01/2017\",\"LastTradeTime\":\"12:31pm\"}}"
 
 	exchanges["Foo"] = exchange.Exchange{
 		Name:           "Foo",
 		Symbol:         "F",
+		Price:          30.89,
+		PreviousClose:  40.82,
+		OpenPrice:      32.79,
 		PercentChange:  "2%",
 		ChangeInPoints: "2.0",
 		LastTradeDate:  "12/01/2017",
@@ -84,6 +87,9 @@ func TestJoinReturnsParsedJSONExchanges(t *testing.T) {
 	exchanges["Bar"] = exchange.Exchange{
 		Name:           "Bar",
 		Symbol:         "B",
+		Price:          30.89,
+		PreviousClose:  40.82,
+		OpenPrice:      32.79,
 		PercentChange:  "2%",
 		ChangeInPoints: "2.0",
 		LastTradeDate:  "12/01/2017",
